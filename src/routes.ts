@@ -31,6 +31,13 @@ const userResponseSchema = z.object({
   email: z.string(),
 });
 
+
+//construção do modelo do schema para alteração de dados dos usuários
+const userUpdateSchema = z.object({
+  name: z.string(),
+  email: z.email(),
+})
+
 //crio as rotas e exporto 
 export async function routes(app: FastifyTypedInstance) {
   app.get(
@@ -46,6 +53,33 @@ export async function routes(app: FastifyTypedInstance) {
     },
     (request, response) => {
       return usuarios; // retorna o payload direto, sem .send() — evita o erro de tipo do FastifyReply
+    }
+  );
+
+  app.get(
+    "/users/:id",
+    {
+      schema: {
+        tags: ["usuarios"],
+        description: "Listar usuário por ID",
+        params: userParamsSchema,
+        response: {
+          200: userResponseSchema,
+          404: z.object({ message: z.string() }),
+        },
+      },
+    },
+    async (request, response) => {
+      const { id } = request.params; // já tipado como string (UUID)
+
+      const usuario = usuarios.find((u) => u.id === id); // busca no array em memória
+
+      if (!usuario) {
+        response.code(404);
+        return { message: "Usuário não encontrado" };
+      }
+
+      return usuario;
     }
   );
 
@@ -77,32 +111,42 @@ export async function routes(app: FastifyTypedInstance) {
     }
   );
 
-  app.get(
-    "/users/:id",
+  app.put(
+    "/usuarios/:id",
     {
-      schema: {
-        tags: ["usuarios"],
-        description: "Listar usuário por ID",
+      schema:{
+        tags:['usuarios'],
+        description:("Alteração dos dados dos usuários"),
         params: userParamsSchema,
+        body: userUpdateSchema,
         response: {
-          200: userResponseSchema,
-          404: z.object({ message: z.string() }),
+          200 : userResponseSchema,
+          404 : z.object({message: z.string()})
         },
       },
     },
-    async (request, response) => {
-      const { id } = request.params; // já tipado como string (UUID)
+    async(request, response) => {
+       const { id } = request.params;
+       const {name, email} = request.body;
 
-      const usuario = usuarios.find((u) => u.id === id); // busca no array em memória
+      const usuarioSelecionado = usuarios.find((u) => u.id == id);
 
-      if (!usuario) {
-        response.code(404);
-        return { message: "Usuário não encontrado" };
+      if(!usuarioSelecionado){
+      response.code(404);
+      return {message: "Usuário não encontrado!"}
       }
 
-      return usuario;
+      usuarioSelecionado.name = name || usuarioSelecionado.name;
+      usuarioSelecionado.email = email || usuarioSelecionado.email;
+
+
+      response.code(200);
+      return usuarioSelecionado;
+
     }
-  );
+  )
+
+  
 
   app.delete(
     "/users/:id",
@@ -135,4 +179,6 @@ export async function routes(app: FastifyTypedInstance) {
     
     }
   );
+
+  
 }
