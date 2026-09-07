@@ -18,10 +18,13 @@ const createUserBodySchema = z.object({
   email: z.string().email(),
 });
 
+//aqui eu crio o esquema para usar de modelos nos parâmetros vindo da URL em formato de QUERY
 const userParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
+
+//construção do modelo do schema para retornar os usuários 
 const userResponseSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -61,16 +64,16 @@ export async function routes(app: FastifyTypedInstance) {
     (request, response) => {
       const { name, email } = request.body; // já validado e tipado pelo schema, sem precisar de .parse()
 
-      const newUser: User = {
+      const novoUsuario: User = {
         id: randomUUID(),
         name,
         email,
       };
 
-      usuarios.push(newUser);
+      usuarios.push(novoUsuario);
 
       response.status(201); // status definido separadamente
-      return newUser;        // retorna só o payload, não o resultado de .send()
+      return novoUsuario;        // retorna só o payload, não o resultado de .send()
     }
   );
 
@@ -98,6 +101,38 @@ export async function routes(app: FastifyTypedInstance) {
       }
 
       return usuario;
+    }
+  );
+
+  app.delete(
+    "/users/:id",
+    {
+      schema:{
+        tags:['usuarios'],
+        description: "Deletar usuário por ID",
+        params: userParamsSchema,
+        response:{
+          204: z.null(),
+          404: z.object({message: z.string()})
+        },
+      },
+    },
+    async(request, response) => {
+      const { id } = request.params;
+
+      const usuarioIndex = usuarios.findIndex((u) => u.id === id);
+
+
+      if(usuarioIndex === -1){
+        response.code(404);
+        return{ message: "Usuário não encontrado"};
+      }
+
+
+      usuarios.splice(usuarioIndex, 1);
+      response.code(204);
+      return null;
+    
     }
   );
 }
