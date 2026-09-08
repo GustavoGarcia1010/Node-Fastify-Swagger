@@ -61,7 +61,10 @@ Lá é possível visualizar todos os endpoints, seus schemas de entrada/saída e
 | `GET` | `/users` | Lista todos os usuários |
 | `POST` | `/users` | Cria um novo usuário |
 | `GET` | `/users/:id` | Busca um usuário pelo ID (UUID) |
+| `PUT` | `/usuarios/:id` | Atualiza os dados de um usuário pelo ID (UUID) |
 | `DELETE` | `/users/:id` | Remove um usuário pelo ID (UUID) |
+
+> **Nota:** a rota de atualização está registrada como `/usuarios/:id` (em português), enquanto as demais usam `/users/:id` (em inglês). Vale padronizar para um único idioma de rota — ver observação na seção de padrões REST abaixo.
 
 ### Exemplo de requisição — criar usuário
 
@@ -81,6 +84,24 @@ Resposta (`201 Created`):
 }
 ```
 
+### Exemplo de requisição — atualizar usuário
+
+```bash
+curl -X PUT http://localhost:3333/usuarios/d290f1ee-6c54-4b01-90e6-d701748f0851 \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Maria Souza", "email": "maria.souza@exemplo.com"}'
+```
+
+Resposta (`200 OK`):
+
+```json
+{
+  "id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+  "name": "Maria Souza",
+  "email": "maria.souza@exemplo.com"
+}
+```
+
 ## Sobre os padrões REST adotados
 
 Este projeto segue os princípios de uma API REST:
@@ -90,6 +111,9 @@ Este projeto segue os princípios de uma API REST:
 - **Códigos de status apropriados**: `200` para sucesso em leitura, `201` para criação bem-sucedida, `204` para remoção sem conteúdo de retorno, `404` para recurso não encontrado.
 - **Contrato de dados validado**: toda entrada (`body`, `params`) e saída (`response`) é validada por schemas Zod, garantindo que a API sempre responda no formato documentado.
 - **Sem estado (stateless)**: cada requisição contém todas as informações necessárias para ser processada, sem depender de sessão no servidor.
+- **Nomenclatura consistente de rotas** *(pendência)*: a rota de atualização (`/usuarios/:id`) está em português enquanto as demais (`/users/:id`) estão em inglês. O recomendado é escolher um único idioma para todos os recursos — o ajuste é trocar `/usuarios/:id` para `/users/:id` no `app.put(...)`.
+
+> **Observação sobre o PUT**: a implementação atual aceita `name` e `email` no body e mantém o valor antigo caso um dos dois não seja enviado (`usuarioSelecionado.name || usuarioSelecionado.name`). Esse comportamento é, na prática, mais parecido com um `PATCH` (atualização parcial) do que com um `PUT` tradicional (que, pelos padrões REST, normalmente espera o recurso completo substituído). Se a intenção é permitir atualização parcial, considere renomear a rota para `PATCH /users/:id` e tornar os campos do `userUpdateSchema` opcionais com `.partial()`.
 
 ## Estrutura do projeto
 
