@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import type { FastifyTypedInstance } from "./types.js";
+import type { FastifyTypedInstance } from "../../../types.js";
 
 //crio a interface de usuário 
 interface User {
